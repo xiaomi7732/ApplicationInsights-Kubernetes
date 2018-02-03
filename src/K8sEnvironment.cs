@@ -1,21 +1,24 @@
-﻿namespace Microsoft.ApplicationInsights.Kubernetes
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Microsoft.ApplicationInsights.Kubernetes.Entities;
-    using Microsoft.Extensions.Logging;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.ApplicationInsights.Kubernetes.Entities;
+using Microsoft.Extensions.Logging;
 
-    using static Microsoft.ApplicationInsights.Kubernetes.StringUtils;
+using static Microsoft.ApplicationInsights.Kubernetes.StringUtils;
+
+namespace Microsoft.ApplicationInsights.Kubernetes
+{
 
     /// <summary>
     /// Flatten objects for application insights or other external caller to fetch K8s properties.
     /// </summary>
-    internal class K8sEnvironment : IK8sEnvironment
+    internal class K8sEnvironment : IK8sEnvironment, IDisposable
     {
+        public static K8sEnvironment Current { get; private set; }
+
         // Property holder objects
         private K8sPod myPod;
         private ContainerStatus myContainerStatus;
@@ -24,8 +27,12 @@
         private K8sNode myNode;
         private ILogger<K8sEnvironment> logger;
 
+        private K8sWatcher<K8sPod> podReadyWatcher;
+        private KubeHttpClient httpClient;
+        private KubeHttpClientSettingsProvider settings;
+
         // Waiter to making sure initialization code is run before calling into properties.
-        internal EventWaitHandle InitializationWaiter { get; private set; }
+        private EventWaitHandle InitializationWaiter { get; set; }
 
         /// <summary>
         /// Private ctor to prevent the ctor being called.
@@ -37,70 +44,84 @@
             this.InitializationWaiter = new ManualResetEvent(false);
         }
 
+        public K8sEnvironment Create(TimeSpan timeout, ILoggerFactory loggerFactory)
+        {
+            this.logger = loggerFactory?.CreateLogger<K8sEnvironment>();
+            this.settings = new KubeHttpClientSettingsProvider(loggerFactory);
+            this.httpClient = new KubeHttpClient(settings);
+            this.podReadyWatcher = new K8sPodWatcher(loggerFactory);
+            this.podReadyWatcher.Changed += K8sPodChanged;
+            // Fire & forget on purpose.
+            Task.Run(() =>
+            {
+                podReadyWatcher.StartWatchAsync(httpClient).ConfigureAwait(false);
+            });
+            Task.Run(() =>
+            {
+                InitializationWaiter.WaitOne((int)timeout.TotalMilliseconds);
+            });
+            return this;
+        }
+
+
         /// <summary>
         /// Async factory method to build the instance of this class.
         /// </summary>
         /// <returns></returns>
         public static async Task<K8sEnvironment> CreateAsync(TimeSpan timeout, ILoggerFactory loggerFactory)
         {
-            K8sEnvironment instance = null;
-            ILogger<K8sEnvironment> logger = null;
+            if (Current == null)
+            {
+                Current = new K8sEnvironment();
+                Current.Create(timeout, loggerFactory);
+            }
+            await Task.Run(() =>
+            {
+                Current.InitializationWaiter.WaitOne();
+            }).ConfigureAwait(false);
+            return Current;
+        }
+
+        private async void K8sPodChanged(object sender, K8sWatcherEventArgs e)
+        {
             try
             {
-                logger = loggerFactory?.CreateLogger<K8sEnvironment>();
-
-                KubeHttpClientSettingsProvider settings = new KubeHttpClientSettingsProvider(loggerFactory);
-                using (KubeHttpClient httpClient = new KubeHttpClient(settings))
-                using (K8sQueryClient queryClient = new K8sQueryClient(httpClient))
+                using (K8sQueryClient queryClient = new K8sQueryClient(this.httpClient))
                 {
-                    if (await SpinWaitContainerReady(timeout, queryClient, settings.ContainerId, logger).ConfigureAwait(false))
+                    K8sPod myPod = await queryClient.GetMyPodAsync().ConfigureAwait(false);
+                    this.myPod = myPod;
+                    logger?.LogDebug(Invariant($"Getting container status of container-id: {settings.ContainerId}"));
+                    this.myContainerStatus = myPod.GetContainerStatus(settings.ContainerId);
+
+                    IEnumerable<K8sReplicaSet> replicaSetList = await queryClient.GetReplicasAsync().ConfigureAwait(false);
+                    this.myReplicaSet = myPod.GetMyReplicaSet(replicaSetList);
+
+                    if (this.myReplicaSet != null)
                     {
-                        instance = new K8sEnvironment()
-                        {
-                            ContainerID = settings.ContainerId
-                        };
-                        instance.logger = logger;
-
-                        K8sPod myPod = await queryClient.GetMyPodAsync().ConfigureAwait(false);
-                        instance.myPod = myPod;
-                        logger?.LogDebug(Invariant($"Getting container status of container-id: {settings.ContainerId}"));
-                        instance.myContainerStatus = myPod.GetContainerStatus(settings.ContainerId);
-
-                        IEnumerable<K8sReplicaSet> replicaSetList = await queryClient.GetReplicasAsync().ConfigureAwait(false);
-                        instance.myReplicaSet = myPod.GetMyReplicaSet(replicaSetList);
-
-                        if (instance.myReplicaSet != null)
-                        {
-                            IEnumerable<K8sDeployment> deploymentList = await queryClient.GetDeploymentsAsync().ConfigureAwait(false);
-                            instance.myDeployment = instance.myReplicaSet.GetMyDeployment(deploymentList);
-                        }
-
-                        if (instance.myPod != null)
-                        {
-                            IEnumerable<K8sNode> nodeList = await queryClient.GetNodesAsync().ConfigureAwait(false);
-                            string nodeName = instance.myPod.Spec.NodeName;
-                            if (!string.IsNullOrEmpty(nodeName))
-                            {
-                                instance.myNode = nodeList.FirstOrDefault(node => !string.IsNullOrEmpty(node.Metadata?.Name) && node.Metadata.Name.Equals(nodeName, StringComparison.OrdinalIgnoreCase));
-                            }
-                        }
+                        IEnumerable<K8sDeployment> deploymentList = await queryClient.GetDeploymentsAsync().ConfigureAwait(false);
+                        this.myDeployment = this.myReplicaSet.GetMyDeployment(deploymentList);
                     }
-                    else
+
+                    if (this.myPod != null)
                     {
-                        logger?.LogError(Invariant($"Kubernetes info is not available within given time of {timeout.TotalMilliseconds} ms."));
+                        IEnumerable<K8sNode> nodeList = await queryClient.GetNodesAsync().ConfigureAwait(false);
+                        string nodeName = this.myPod.Spec.NodeName;
+                        if (!string.IsNullOrEmpty(nodeName))
+                        {
+                            this.myNode = nodeList.FirstOrDefault(node => !string.IsNullOrEmpty(node.Metadata?.Name) && node.Metadata.Name.Equals(nodeName, StringComparison.OrdinalIgnoreCase));
+                        }
                     }
                 }
-                return instance;
             }
             catch (Exception ex)
             {
                 logger?.LogCritical(ex.ToString());
-                return null;
+                InitializationWaiter.Reset();
             }
             finally
             {
                 // Signal that initialization is done.
-                instance?.InitializationWaiter.Set();
+                InitializationWaiter.Set();
             }
         }
 
@@ -141,7 +162,7 @@
         /// <summary>
         /// ContainerID for the current K8s entity.
         /// </summary>
-        public string ContainerID { get; private set; }
+        public string ContainerID => this.settings?.ContainerId;
 
         /// <summary>
         /// Name of the container specificed in deployment spec.
@@ -189,5 +210,48 @@
         {
             return string.Join(",", dictionary.Select(kvp => kvp.Key + ':' + kvp.Value));
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (httpClient != null)
+                    {
+                        httpClient.Dispose();
+                        httpClient = null;
+                    }
+                    if (podReadyWatcher != null)
+                    {
+                        podReadyWatcher.Dispose();
+                        podReadyWatcher.Dispose();
+                    }
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
+                // TODO: set large fields to null.
+                disposedValue = true;
+            }
+        }
+
+        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
+        // ~K8sEnvironment() {
+        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+        //   Dispose(false);
+        // }
+
+        // This code added to correctly implement the disposable pattern.
+        void IDisposable.Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

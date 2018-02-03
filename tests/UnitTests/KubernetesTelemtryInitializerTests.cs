@@ -7,13 +7,6 @@ namespace Microsoft.ApplicationInsights.Kubernetes
 {
     public class KubernetesTelemtryInitializerTests
     {
-        [Fact(DisplayName = "K8sTelemetryInitializer gets null K8s environment when given null")]
-        public void ConstructorSetsNullGetsNull()
-        {
-            KubernetesTelemetryInitializer target = new KubernetesTelemetryInitializer(null, null);
-            Assert.Null(target.K8sEnvironment);
-        }
-
         [Fact(DisplayName = "K8sTelemetryInitializer sets the K8s env correct")]
         public void ConstructorSetK8sEnvironment()
         {

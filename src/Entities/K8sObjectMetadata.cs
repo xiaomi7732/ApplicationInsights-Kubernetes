@@ -5,7 +5,7 @@
 
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
 
-    internal class K8sObjectMetadata<TParent>
+    internal class K8sObjectMetadata
     {
         [JsonProperty("name")]
         public string Name { get; set; }

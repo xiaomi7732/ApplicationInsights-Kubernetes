@@ -75,9 +75,6 @@
                 K8sEnvironment k8sEnv = K8sEnvironment.CreateAsync(timeout.Value, loggerFactory).ConfigureAwait(false).GetAwaiter().GetResult();
                 if (k8sEnv != null)
                 {
-                    // Wait until the initialization is done.
-                    k8sEnv.InitializationWaiter.WaitOne(TimeSpan.FromMinutes(1));
-
                     // Inject the telemetry initializer.
                     ITelemetryInitializer initializer = new KubernetesTelemetryInitializer(loggerFactory, k8sEnv);
                     configuration.TelemetryInitializers.Add(initializer);

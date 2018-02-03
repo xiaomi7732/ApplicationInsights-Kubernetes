@@ -1,17 +1,18 @@
-﻿namespace Microsoft.ApplicationInsights.Kubernetes
-{
-    using System;
-    using Microsoft.ApplicationInsights.Channel;
-    using Microsoft.ApplicationInsights.Extensibility;
-    using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
+﻿using System;
+using Microsoft.ApplicationInsights.Channel;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
-    using static Microsoft.ApplicationInsights.Kubernetes.StringUtils;
+using static Microsoft.ApplicationInsights.Kubernetes.StringUtils;
 
 #if !NETSTANDARD1_3 && !NETSTANDARD1_6
     using System.Diagnostics;
     using System.Globalization;
 #endif
+
+namespace Microsoft.ApplicationInsights.Kubernetes
+{
 
     /// <summary>
     /// Telemetry Initializer for K8s Environment
@@ -38,9 +39,7 @@
             : this(null, null)
         { }
 
-#pragma warning disable CA2222 // Do not decrease inherited member visibility
         internal KubernetesTelemetryInitializer(
-#pragma warning restore CA2222 // Do not decrease inherited member visibility
             ILoggerFactory loggerFactory,
             IK8sEnvironment env)
         {
