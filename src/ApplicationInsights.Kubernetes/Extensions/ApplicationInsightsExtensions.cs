@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// <summary>
     /// Extnesion method to inject Kubernetes Telemtry Initializer.
     /// </summary>
-    public static class ApplicationInsightsExtensions
+    public static class ApplicationInsightsForKubernetesExtensions
     {
         /// <summary>
         /// Enables Application Insights for Kubernetes on the Default TelemtryConfiguration in the dependency injection system.
