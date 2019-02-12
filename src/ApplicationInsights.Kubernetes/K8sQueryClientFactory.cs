@@ -5,9 +5,9 @@ namespace Microsoft.ApplicationInsights.Kubernetes
     internal class K8sQueryClientFactory
     {
         private readonly ILogger _logger;
-        private readonly ILogger<IK8sQueryClient> _queryClientLogger;
+        private readonly ILogger<K8sQueryClient> _queryClientLogger;
 
-        public K8sQueryClientFactory(ILogger<K8sQueryClientFactory> logger, ILogger<IK8sQueryClient> queryClientLogger)
+        public K8sQueryClientFactory(ILogger<K8sQueryClientFactory> logger, ILogger<K8sQueryClient> queryClientLogger)
         {
             _logger = Arguments.IsNotNull(logger, nameof(logger));
             _queryClientLogger = Arguments.IsNotNull(queryClientLogger, nameof(queryClientLogger));
