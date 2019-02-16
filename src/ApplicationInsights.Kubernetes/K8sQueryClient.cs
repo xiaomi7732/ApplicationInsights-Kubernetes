@@ -18,7 +18,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
     {
         internal bool disposed = false;
         private IKubeHttpClient _kubeHttpClient;
-        private readonly ILogger _logger;
+        // private readonly ILogger _logger;
 
         internal IKubeHttpClient KubeHttpClient
         {
@@ -29,9 +29,11 @@ namespace Microsoft.ApplicationInsights.Kubernetes
             }
         }
 
-        public K8sQueryClient(IKubeHttpClient kubeHttpClient, ILogger<K8sQueryClient> logger)
+        public K8sQueryClient(IKubeHttpClient kubeHttpClient
+        //, ILogger<K8sQueryClient> logger
+        )
         {
-            this._logger = Arguments.IsNotNull(logger, nameof(logger));
+            // this._logger = Arguments.IsNotNull(logger, nameof(logger));
             this._kubeHttpClient = Arguments.IsNotNull(kubeHttpClient, nameof(kubeHttpClient));
         }
 
@@ -78,7 +80,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
             }
             else
             {
-                _logger.LogError("Neight container id or %APPINSIGHTS_KUBERNETES_POD_NAME% could be fetched.");
+                // _logger.LogError("Neight container id or %APPINSIGHTS_KUBERNETES_POD_NAME% could be fetched.");
             }
             return targetPod;
         }
@@ -133,19 +135,19 @@ namespace Microsoft.ApplicationInsights.Kubernetes
         {
             Uri requestUri = GetQueryUri(relativeUrl);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-            _logger.LogTrace($"Default Header: {KubeHttpClient.DefaultRequestHeaders}");
+            // _logger.LogTrace($"Default Header: {KubeHttpClient.DefaultRequestHeaders}");
 
             HttpResponseMessage response = await KubeHttpClient.SendAsync(request).ConfigureAwait(false);
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogDebug("Query succeeded.");
+                // _logger.LogDebug("Query succeeded.");
                 string resultString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 K8sEntityList<TEntity> resultList = JsonConvert.DeserializeObject<K8sEntityList<TEntity>>(resultString);
                 return resultList.Items;
             }
             else
             {
-                _logger.LogDebug($"Query Failed. Request Message: {response.RequestMessage}. Status Code: {response.StatusCode}. Phase: {response.ReasonPhrase}");
+                // _logger.LogDebug($"Query Failed. Request Message: {response.RequestMessage}. Status Code: {response.StatusCode}. Phase: {response.ReasonPhrase}");
                 return null;
             }
         }

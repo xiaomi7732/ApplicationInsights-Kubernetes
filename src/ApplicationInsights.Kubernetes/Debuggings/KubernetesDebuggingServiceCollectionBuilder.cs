@@ -12,7 +12,8 @@ namespace Microsoft.ApplicationInsights.Kubernetes.Debugging
         /// Constructor for <see cref="KubernetesDebuggingServiceCollectionBuilder"/>.
         /// </summary>
         /// <param name="logger">The logger.</param>
-        public KubernetesDebuggingServiceCollectionBuilder(ILogger<KubernetesDebuggingServiceCollectionBuilder> logger) : base(() => true, logger) { }
+        public KubernetesDebuggingServiceCollectionBuilder(// ILogger<KubernetesDebuggingServiceCollectionBuilder> logger
+        ) : base(() => true/*  logger */) { }
 
         /// <summary>
         /// Injects the Application Insights for Kubernetes debugging services.

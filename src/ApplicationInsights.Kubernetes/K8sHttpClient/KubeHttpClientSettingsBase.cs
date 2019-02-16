@@ -10,14 +10,14 @@ namespace Microsoft.ApplicationInsights.Kubernetes
 {
     internal abstract class KubeHttpClientSettingsBase : IKubeHttpClientSettingsProvider
     {
-        protected readonly ILogger _logger;
+        // protected readonly ILogger _logger;
 
         public KubeHttpClientSettingsBase(
             string kubernetesServiceHost,
-            string kubernetesServicePort,
-            ILogger<KubeHttpClientSettingsBase> logger)
+            string kubernetesServicePort
+            /* ILogger<KubeHttpClientSettingsBase> logger*/)
         {
-            _logger = Arguments.IsNotNull(logger, nameof(logger));
+            //_logger = Arguments.IsNotNull(logger, nameof(logger));
 
             kubernetesServiceHost = kubernetesServiceHost ?? Environment.GetEnvironmentVariable(@"KUBERNETES_SERVICE_HOST");
             if (string.IsNullOrEmpty(kubernetesServiceHost))
@@ -32,7 +32,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
             }
 
             string baseAddress = Invariant($"https://{kubernetesServiceHost}:{kubernetesServicePort}/");
-            _logger.LogDebug(Invariant($"Kubernetes base address: {baseAddress}"));
+            // _logger.LogDebug(Invariant($"Kubernetes base address: {baseAddress}"));
             ServiceBaseAddress = new Uri(baseAddress, UriKind.Absolute);
         }
 
@@ -83,29 +83,29 @@ namespace Microsoft.ApplicationInsights.Kubernetes
             // If the certificate is a valid, signed certificate, return true.
             if (sslPolicyErrors == SslPolicyErrors.None)
             {
-                _logger.LogTrace("This is a valid signed certificate.");
+                // _logger.LogTrace("This is a valid signed certificate.");
                 return true;
             }
 
-            _logger.LogTrace("Not a authority signed certificate.");
-            _logger.LogTrace("Server Cert RAW: " + Environment.NewLine + Convert.ToBase64String(caCert.RawData));
+            // _logger.LogTrace("Not a authority signed certificate.");
+            // _logger.LogTrace("Server Cert RAW: " + Environment.NewLine + Convert.ToBase64String(caCert.RawData));
 
             // When there is Remote Certificate Chain Error, verify the chain relation between the client and server certificates.
             if (sslPolicyErrors.HasFlag(SslPolicyErrors.RemoteCertificateChainErrors))
             {
-                _logger.LogTrace("Building certificate chain.");
+                // _logger.LogTrace("Building certificate chain.");
                 chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
                 // add all your extra certificate chain
                 chain.ChainPolicy.ExtraStore.Add(caCert);
                 chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
-                _logger.LogTrace("Client Cert RAW: " + Environment.NewLine + Convert.ToBase64String(clientCertificate.RawData));
+                // _logger.LogTrace("Client Cert RAW: " + Environment.NewLine + Convert.ToBase64String(clientCertificate.RawData));
                 bool isValid = chain.Build(clientCertificate);
-                _logger.LogTrace($"Is Chain successfully bulit: {isValid}");
+                // _logger.LogTrace($"Is Chain successfully bulit: {isValid}");
                 return isValid;
             }
 
             // In all other cases, return false.
-            _logger.LogError($"SSL Certificate validation failed.");
+            // _logger.LogError($"SSL Certificate validation failed.");
             return false;
         }
 

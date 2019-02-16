@@ -29,7 +29,8 @@ namespace Microsoft.ApplicationInsights.Kubernetes.Debugging
             {
                 throw new ArgumentNullException(nameof(logger));
             }
-            return new KubernetesDebuggingServiceCollectionBuilder(logger);
+            // return new KubernetesDebuggingServiceCollectionBuilder(logger);
+            return new KubernetesDebuggingServiceCollectionBuilder();
         }
     }
 }

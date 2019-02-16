@@ -12,7 +12,7 @@ namespace Microsoft.Extensions.DependencyInjection
     /// </summary>
     public class KubernetesServiceCollectionBuilder : IKubernetesServiceCollectionBuilder
     {
-        private readonly ILogger _logger;
+        // private readonly ILogger _logger;
         private readonly Func<bool> _isRunningInKubernetes;
 
         /// <summary>
@@ -21,10 +21,10 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="isRunningInKubernetes"></param>
         /// <param name="logger"></param>
         public KubernetesServiceCollectionBuilder(
-            Func<bool> isRunningInKubernetes,
-            ILogger<IKubernetesServiceCollectionBuilder> logger)
+            Func<bool> isRunningInKubernetes)//,
+            // ILogger<IKubernetesServiceCollectionBuilder> logger)
         {
-            _logger = logger;
+            // _logger = logger;
             _isRunningInKubernetes = isRunningInKubernetes ?? throw new ArgumentNullException(nameof(isRunningInKubernetes));
         }
 
@@ -42,12 +42,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 InjectChangableServices(services);
 
                 services.AddSingleton<ITelemetryInitializer, KubernetesTelemetryInitializer>();
-                _logger?.LogDebug("Application Insights Kubernetes injected the service successfully.");
+                // _logger?.LogDebug("Application Insights Kubernetes injected the service successfully.");
                 return services;
             }
             else
             {
-                _logger?.LogWarning("Application is not running inside a Kubernetes cluster.");
+                // _logger?.LogWarning("Application is not running inside a Kubernetes cluster.");
                 return serviceCollection;
             }
         }
@@ -71,7 +71,7 @@ namespace Microsoft.Extensions.DependencyInjection
             }
             else
             {
-                _logger?.LogWarning("Application is not running inside a Kubernetes cluster.");
+                // _logger?.LogWarning("Application is not running inside a Kubernetes cluster.");
                 return serviceCollection;
             }
         }
@@ -92,12 +92,12 @@ namespace Microsoft.Extensions.DependencyInjection
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
                 serviceCollection.AddSingleton<IKubeHttpClientSettingsProvider>(p =>
-                    new KubeHttpClientSettingsProvider(logger: p.GetService<ILogger<KubeHttpClientSettingsProvider>>()));
+                    new KubeHttpClientSettingsProvider(/*logger: p.GetService<ILogger<KubeHttpClientSettingsProvider>>()*/));
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 serviceCollection.AddSingleton<IKubeHttpClientSettingsProvider>(p =>
-                    new KubeHttpSettingsWinContainerProvider(logger: p.GetService<ILogger<KubeHttpSettingsWinContainerProvider>>()));
+                    new KubeHttpSettingsWinContainerProvider(/* logger: p.GetService<ILogger<KubeHttpSettingsWinContainerProvider>>()*/));
             }
             else
             {

@@ -11,14 +11,14 @@ namespace Microsoft.ApplicationInsights.Kubernetes
         private readonly string _namespaceFilePath;
 
         public KubeHttpSettingsWinContainerProvider(
-            ILogger<KubeHttpSettingsWinContainerProvider> logger,
+            // ILogger<KubeHttpSettingsWinContainerProvider> logger,
             string serviceAccountFolder = @"C:\var\run\secrets\kubernetes.io\serviceaccount",
             string tokenFileName = "token",
             string certFileName = "ca.crt",
             string namespaceFileName = "namespace",
             string kubernetesServiceHost = null,
             string kubernetesServicePort = null)
-            : base(kubernetesServiceHost, kubernetesServicePort, logger)
+            : base(kubernetesServiceHost, kubernetesServicePort/*, logger*/)
         {
             // Container id won't be fetched for windows container.
             ContainerId = null;
@@ -33,17 +33,17 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                     if (fileName.Equals(Arguments.IsNotNullOrEmpty(tokenFileName, nameof(tokenFileName)), StringComparison.OrdinalIgnoreCase))
                     {
                         _tokenFilePath = fileInfo.FullName;
-                        _logger.LogDebug($"Found token file path: {_tokenFilePath}");
+                        // _logger.LogDebug($"Found token file path: {_tokenFilePath}");
                     }
                     else if (fileName.Equals(Arguments.IsNotNullOrEmpty(certFileName, nameof(certFileName)), StringComparison.OrdinalIgnoreCase))
                     {
                         _certFilePath = fileInfo.FullName;
-                        _logger.LogDebug($"Found certificate file path: {_certFilePath}");
+                        // _logger.LogDebug($"Found certificate file path: {_certFilePath}");
                     }
                     else if (fileName.Equals(Arguments.IsNotNullOrEmpty(namespaceFileName, nameof(namespaceFileName)), StringComparison.OrdinalIgnoreCase))
                     {
                         _namespaceFilePath = fileInfo.FullName;
-                        _logger.LogDebug($"Found namespace file path: {_namespaceFilePath}");
+                        // _logger.LogDebug($"Found namespace file path: {_namespaceFilePath}");
                     }
                 }
             }
@@ -52,7 +52,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
 
         protected override string GetTokenFilePath()
         {
-            _logger.LogDebug($"Token file path: {_tokenFilePath}");
+            // _logger.LogDebug($"Token file path: {_tokenFilePath}");
             return _tokenFilePath;
         }
 

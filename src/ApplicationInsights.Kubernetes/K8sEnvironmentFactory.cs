@@ -13,7 +13,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
 {
     internal class K8sEnvironmentFactory : IK8sEnvironmentFactory
     {
-        private readonly ILogger _logger;
+        // private readonly ILogger _logger;
         private readonly IKubeHttpClientSettingsProvider _httpClientSettings;
         private readonly KubeHttpClientFactory _httpClientFactory;
         private readonly K8sQueryClientFactory _k8sQueryClientFactory;
@@ -21,10 +21,9 @@ namespace Microsoft.ApplicationInsights.Kubernetes
         public K8sEnvironmentFactory(
             IKubeHttpClientSettingsProvider httpClientSettingsProvider,
             KubeHttpClientFactory httpClientFactory,
-            K8sQueryClientFactory k8SQueryClientFactory,
-            ILogger<K8sEnvironmentFactory> logger)
+            K8sQueryClientFactory k8SQueryClientFactory)
         {
-            _logger = Arguments.IsNotNull(logger, nameof(logger));
+            // _logger = Arguments.IsNotNull(logger, nameof(logger));
             _httpClientSettings = Arguments.IsNotNull(httpClientSettingsProvider, nameof(httpClientSettingsProvider));
             _httpClientFactory = Arguments.IsNotNull(httpClientFactory, nameof(httpClientFactory));
             _k8sQueryClientFactory = Arguments.IsNotNull(k8SQueryClientFactory, nameof(k8SQueryClientFactory));
@@ -68,7 +67,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                             };
 
                             instance.myPod = myPod;
-                            _logger.LogDebug(Invariant($"Getting container status of container-id: {containerId}"));
+                            // _logger.LogDebug(Invariant($"Getting container status of container-id: {containerId}"));
                             instance.myContainerStatus = myPod.GetContainerStatus(containerId);
 
                             IEnumerable<K8sReplicaSet> replicaSetList = await queryClient.GetReplicasAsync().ConfigureAwait(false);
@@ -92,13 +91,13 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                         }
                         else
                         {
-                            _logger.LogError(Invariant($"Kubernetes info is not available before the timeout at {timeoutAt}."));
+                            // _logger.LogError(Invariant($"Kubernetes info is not available before the timeout at {timeoutAt}."));
                         }
                     }
                     else
                     {
                         // MyPod is null, meaning query timed out.
-                        _logger.LogCritical("Fail to fetch the pod information in time. Kubernetes info will not be available for the telemetry.");
+                        // _logger.LogCritical("Fail to fetch the pod information in time. Kubernetes info will not be available for the telemetry.");
                         return null;
                     }
                 }
@@ -106,7 +105,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
             }
             catch (Exception ex)
             {
-                _logger.LogCritical(ex.ToString());
+                // _logger.LogCritical(ex.ToString());
                 return null;
             }
         }
@@ -125,15 +124,15 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning($"Query exception while trying to get pod info: {ex.Message}");
-                    _logger.LogDebug(ex.StackTrace);
+                    // _logger.LogWarning($"Query exception while trying to get pod info: {ex.Message}");
+                    // _logger.LogDebug(ex.StackTrace);
                     myPod = null;
                 }
 
                 if (myPod != null)
                 {
                     stopwatch.Stop();
-                    _logger.LogDebug(Invariant($"K8s info avaialbe in: {stopwatch.ElapsedMilliseconds} ms."));
+                    // _logger.LogDebug(Invariant($"K8s info avaialbe in: {stopwatch.ElapsedMilliseconds} ms."));
                     return myPod;
                 }
 
@@ -175,7 +174,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                 if (myPod != null && myPod.GetContainerStatus(myContainerId).Ready)
                 {
                     stopwatch.Stop();
-                    _logger.LogDebug(Invariant($"K8s info avaialbe in: {stopwatch.ElapsedMilliseconds} ms."));
+                    // _logger.LogDebug(Invariant($"K8s info avaialbe in: {stopwatch.ElapsedMilliseconds} ms."));
                     return true;
                 }
 

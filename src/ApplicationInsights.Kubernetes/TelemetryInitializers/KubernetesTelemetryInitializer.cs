@@ -36,18 +36,16 @@ namespace Microsoft.ApplicationInsights.Kubernetes
         public KubernetesTelemetryInitializer(
             IK8sEnvironmentFactory k8sEnvFactory,
             IOptions<AppInsightsForKubernetesOptions> options,
-            SDKVersionUtils sdkVersionUtils,
-            ILogger<KubernetesTelemetryInitializer> logger)
+            SDKVersionUtils sdkVersionUtils)
         {
             _k8sEnvironment = null;
-            _logger = logger;
 
             // Options can't be null.
             Debug.Assert(options != null, "Options can't be null.");
             _options = Arguments.IsNotNull(options?.Value, nameof(options));
 
-            _logger.LogDebug($@"Initialize Application Insights for Kubernetes telemetry initializer with Options:
-{JsonConvert.SerializeObject(_options)}");
+//             _logger.LogDebug($@"Initialize Application Insights for Kubernetes telemetry initializer with Options:
+// {JsonConvert.SerializeObject(_options)}");
 
             _sdkVersionUtils = Arguments.IsNotNull(sdkVersionUtils, nameof(sdkVersionUtils));
             _timeoutAt = DateTime.Now.Add(_options.InitializationTimeout);
@@ -83,7 +81,7 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                     if (!_isK8sQueryTimeoutReported)
                     {
                         _isK8sQueryTimeoutReported = true;
-                        _logger.LogError("Query Kubernetes Environment timeout.");
+                        // _logger.LogError("Query Kubernetes Environment timeout.");
                     }
                 }
             }
@@ -165,13 +163,13 @@ namespace Microsoft.ApplicationInsights.Kubernetes
         {
             if (telemetry == null)
             {
-                _logger.LogError("telemetry object is null in telememtry initializer.");
+                // _logger.LogError("telemetry object is null in telemetry initializer.");
                 return;
             }
 
             if (string.IsNullOrEmpty(key))
             {
-                _logger.LogError("Key is required to set custom dimension.");
+                // _logger.LogError("Key is required to set custom dimension.");
                 return;
             }
 
@@ -179,11 +177,11 @@ namespace Microsoft.ApplicationInsights.Kubernetes
             {
                 if (isValueOptional)
                 {
-                    _logger.LogTrace(Invariant($"Value is null or empty for key: {key}"));
+                    // _logger.LogTrace(Invariant($"Value is null or empty for key: {key}"));
                 }
                 else
                 {
-                    _logger.LogError(Invariant($"Value is required to set custom dimension. Key: {key}"));
+                    // _logger.LogError(Invariant($"Value is required to set custom dimension. Key: {key}"));
                 }
                 return;
             }
@@ -197,17 +195,17 @@ namespace Microsoft.ApplicationInsights.Kubernetes
                 string existingValue = telemetry.Context.Properties[key];
                 if (string.Equals(existingValue, value, System.StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogTrace(Invariant($"The telemetry already contains the property of {key} with the same value of {existingValue}."));
+                    // _logger.LogTrace(Invariant($"The telemetry already contains the property of {key} with the same value of {existingValue}."));
                 }
                 else
                 {
                     telemetry.Context.Properties[key] = value;
-                    _logger.LogDebug(Invariant($"The telemetry already contains the property of {key} with value {existingValue}. The new value is: {value}"));
+                    // _logger.LogDebug(Invariant($"The telemetry already contains the property of {key} with value {existingValue}. The new value is: {value}"));
                 }
             }
         }
 
-        private readonly ILogger _logger;
+        // private readonly ILogger _logger;
         private readonly SDKVersionUtils _sdkVersionUtils;
         private readonly DateTime _timeoutAt;
 

@@ -117,7 +117,7 @@ namespace Microsoft.Extensions.DependencyInjection
             serviceCollection = BuildK8sServiceCollection(
                 serviceCollection,
                 detectKubernetes,
-                logger: logger,
+                // logger: logger,
                 kubernetesServiceCollectionBuilder: kubernetesServiceCollectionBuilder);
             return serviceCollection;
         }
@@ -163,12 +163,12 @@ namespace Microsoft.Extensions.DependencyInjection
         private static IServiceCollection BuildK8sServiceCollection(
             IServiceCollection services,
             Func<bool> detectKubernetes,
-            ILogger<IKubernetesServiceCollectionBuilder> logger,
+            // ILogger<IKubernetesServiceCollectionBuilder> logger,
             IKubernetesServiceCollectionBuilder kubernetesServiceCollectionBuilder = null)
         {
             detectKubernetes = detectKubernetes ?? IsRunningInKubernetes;
             kubernetesServiceCollectionBuilder = kubernetesServiceCollectionBuilder ??
-                new KubernetesServiceCollectionBuilder(detectKubernetes, logger);
+                new KubernetesServiceCollectionBuilder(detectKubernetes/* , logger*/);
 
             services = kubernetesServiceCollectionBuilder.InjectServices(services);
 
