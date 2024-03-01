@@ -1,13 +1,12 @@
 using System;
 using System.Runtime.InteropServices;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.ApplicationInsights.Kubernetes;
 using Microsoft.ApplicationInsights.Kubernetes.Containers;
 using Microsoft.ApplicationInsights.Kubernetes.Debugging;
 using Microsoft.ApplicationInsights.Kubernetes.Pods;
-using Microsoft.ApplicationInsights.Kubernetes.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OpenTelemetries.Instrumentations.Kubernetes.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -59,7 +58,7 @@ internal class KubernetesServiceCollectionBuilder : IKubernetesServiceCollection
             RegisterCommonServices(serviceCollection);
             RegisterSettingsProvider(serviceCollection);
             RegisterK8sEnvironmentFactory(serviceCollection);
-            serviceCollection.AddSingleton<ITelemetryInitializer, KubernetesTelemetryInitializer>();
+            // serviceCollection.AddSingleton<ITelemetryInitializer, KubernetesTelemetryInitializer>();
 
             _logger.LogDebug("Application Insights Kubernetes injected the service successfully.");
             return serviceCollection;
@@ -86,8 +85,8 @@ internal class KubernetesServiceCollectionBuilder : IKubernetesServiceCollection
 
     private static void RegisterCommonServices(IServiceCollection serviceCollection)
     {
-        serviceCollection.AddSingleton<ITelemetryKeyCache, TelemetryKeyCache>();
-        serviceCollection.AddSingleton<SDKVersionUtils>(_ => SDKVersionUtils.Instance);
+        // serviceCollection.AddSingleton<ITelemetryKeyCache, TelemetryKeyCache>();
+        // serviceCollection.AddSingleton<SDKVersionUtils>(_ => SDKVersionUtils.Instance);
         serviceCollection.AddSingleton<IK8sClientService>(_ => K8sClientService.Instance);
         serviceCollection.AddSingleton<IContainerIdHolder, ContainerIdHolder>();
 
@@ -148,12 +147,15 @@ internal class KubernetesServiceCollectionBuilder : IKubernetesServiceCollection
         serviceCollection.TryAddSingleton<IK8sEnvironmentHolder>(_ => K8sEnvironmentHolder.Instance);
 
         _logger.LogTrace("Registering bootstrap and hosted service.");
-        serviceCollection.TryAddSingleton<IK8sInfoBootstrap, K8sInfoBootstrap>();
-        if (!_skipRegisterBackendService)
-        {
-            _logger.LogInformation("Skip registering {0} by user configuration.", nameof(K8sInfoBackgroundService));
-            serviceCollection.AddHostedService<K8sInfoBackgroundService>();
-        }
+        serviceCollection.TryAddSingleton<IK8sInfoBootstrap, K8sEnvironmentFetcher>();
+        // if (!_skipRegisterBackendService)
+        // {
+        //     _logger.LogInformation("Skip registering {0} by user configuration.", nameof(K8sInfoBackgroundService));
+        //     serviceCollection.AddHostedService<K8sInfoBackgroundService>();
+        // }
+
+        serviceCollection.AddHostedService<K8sInfoInitializer>();
+        
         _logger.LogTrace("Registered bootstrap and hosted service.");
     }
 }

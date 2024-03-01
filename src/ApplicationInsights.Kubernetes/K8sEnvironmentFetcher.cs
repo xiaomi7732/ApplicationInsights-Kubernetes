@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Microsoft.ApplicationInsights.Kubernetes;
 
-internal class K8sEnvironmentFetcher : IK8sEnvironmentFetcher
+internal class K8sEnvironmentFetcher : IK8sEnvironmentFetcher, IK8sInfoBootstrap
 {
     private readonly IK8sEnvironmentHolder _k8sEnvironmentHolder;
     private readonly IK8sEnvironmentFactory _k8SEnvironmentFactory;
@@ -26,6 +26,8 @@ internal class K8sEnvironmentFetcher : IK8sEnvironmentFetcher
         _k8sEnvironmentHolder = environmentHolder ?? throw new System.ArgumentNullException(nameof(environmentHolder));
         _k8SEnvironmentFactory = k8SEnvironmentFactory ?? throw new System.ArgumentNullException(nameof(k8SEnvironmentFactory));
     }
+
+    public Task ExecuteAsync(CancellationToken cancellationToken) => UpdateK8sEnvironmentAsync(cancellationToken);
 
     public async Task UpdateK8sEnvironmentAsync(CancellationToken cancellationToken)
     {

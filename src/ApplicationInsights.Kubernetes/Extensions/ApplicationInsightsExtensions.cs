@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.ApplicationInsights.Kubernetes;
 using Microsoft.ApplicationInsights.Kubernetes.Debugging;
 using Microsoft.Extensions.Logging;
@@ -25,7 +24,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="applyOptions">Action to customize the configuration of Application Insights for Kubernetes.</param>
         /// <param name="clusterCheck">Provides a custom implementation to check whether it is inside kubernetes cluster or not.</param>
         /// <returns>The service collection for chaining the next operation.</returns>
-        public static IServiceCollection AddApplicationInsightsKubernetesEnricher(
+        public static IServiceCollection AddK8sResourceProvider(
             this IServiceCollection services,
             LogLevel? diagnosticLogLevel = LogLevel.None,
             bool disableBackgroundService = false,
@@ -39,33 +38,33 @@ namespace Microsoft.Extensions.DependencyInjection
                 ApplicationInsightsKubernetesDiagnosticSource.Instance.Observable.SubscribeWithAdapter(observer);
             }
 
-            if (!KubernetesTelemetryInitializerExists(services))
-            {
-                services.ConfigureKubernetesTelemetryInitializer(applyOptions, clusterCheck, disableBackgroundService);
-            }
+            // if (!KubernetesTelemetryInitializerExists(services))
+            // {
+            services.ConfigureKubernetesTelemetryInitializer(applyOptions, clusterCheck, disableBackgroundService);
+            // }
             return services;
         }
 
-        /// <summary>
-        /// Bootstraps Application Insights Kubernetes enricher. This is intended to be used in console application that does not use hosted services.
-        /// </summary>
-        public static void StartApplicationInsightsKubernetesEnricher(this IServiceProvider serviceProvider)
-        {
-            IK8sInfoBootstrap? k8sInfoBootstrap = serviceProvider.GetService<IK8sInfoBootstrap>();
-            if (k8sInfoBootstrap is null)
-            {
-                _logger.LogInformation("No service registered by type {0}. Either not running in a Kubernetes cluster or `{1}()` wasn't called on the service collection.", nameof(IK8sInfoBootstrap), nameof(AddApplicationInsightsKubernetesEnricher));
-                return;
-            }
-            k8sInfoBootstrap.Run();
-        }
+        // /// <summary>
+        // /// Bootstraps Application Insights Kubernetes enricher. This is intended to be used in console application that does not use hosted services.
+        // /// </summary>
+        // public static void StartApplicationInsightsKubernetesEnricher(this IServiceProvider serviceProvider)
+        // {
+        //     IK8sInfoBootstrap? k8sInfoBootstrap = serviceProvider.GetService<IK8sInfoBootstrap>();
+        //     if (k8sInfoBootstrap is null)
+        //     {
+        //         _logger.LogInformation("No service registered by type {0}. Either not running in a Kubernetes cluster or `{1}()` wasn't called on the service collection.", nameof(IK8sInfoBootstrap), nameof(AddApplicationInsightsKubernetesEnricher));
+        //         return;
+        //     }
+        //     // k8sInfoBootstrap.Run();
+        // }
 
-        /// <summary>
-        /// Checks if the KubernetesTelemetryInitializer exists in the service collection.
-        /// </summary>
-        /// <param name="serviceCollection">The service collection.</param>
-        private static bool KubernetesTelemetryInitializerExists(IServiceCollection serviceCollection)
-            => serviceCollection.Any(t => !t.IsKeyedService && t.ImplementationType == typeof(KubernetesTelemetryInitializer));
+        // /// <summary>
+        // /// Checks if the KubernetesTelemetryInitializer exists in the service collection.
+        // /// </summary>
+        // /// <param name="serviceCollection">The service collection.</param>
+        // private static bool KubernetesTelemetryInitializerExists(IServiceCollection serviceCollection)
+        //     => false; // serviceCollection.Any(t => !t.IsKeyedService && t.ImplementationType == typeof(KubernetesTelemetryInitializer));
 
         /// <summary>
         /// Configure the KubernetesTelemetryInitializer and its dependencies.
