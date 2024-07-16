@@ -1,4 +1,8 @@
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Services.AddApplicationInsightsKubernetesEnricher();
+
 var app = builder.Build();
 
 app.MapGet("/", () => new
