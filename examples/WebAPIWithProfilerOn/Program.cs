@@ -1,7 +1,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplicationInsightsTelemetry();
-builder.Services.AddApplicationInsightsKubernetesEnricher();
+builder.Services.AddApplicationInsightsKubernetesEnricher(LogLevel.Information);
 
 var app = builder.Build();
 

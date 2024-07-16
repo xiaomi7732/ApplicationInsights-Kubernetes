@@ -9,7 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
-    <PackageReference Include="Microsoft.ApplicationInsights.Kubernetes" Version="7.0.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.Kubernetes" Version="7.0.1-beta1" />
+    
   </ItemGroup>
 
 </Project>
