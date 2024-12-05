@@ -17,6 +17,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 internal class KubernetesServiceCollectionBuilder : IKubernetesServiceCollectionBuilder
 {
     private readonly IClusterEnvironmentCheck _clusterCheck;
+    private readonly bool _skipRegisterBackendService;
     private readonly Action<AppInsightsForKubernetesOptions>? _customizeOptions;
     private readonly ApplicationInsightsKubernetesDiagnosticSource _logger = ApplicationInsightsKubernetesDiagnosticSource.Instance;
 
@@ -26,13 +27,17 @@ internal class KubernetesServiceCollectionBuilder : IKubernetesServiceCollection
     /// <param name="customizeOptions">An optional delegate to overwrite app insights for kubernetes options.</param>
     /// <param name="clusterCheck">A service to check if the current process is inside a K8s cluster. This is intended to be used by tests. 
     /// A default checker will be provided when null.
+    /// <param name="skipRegisterBackendService">To skip register backend service when set to true. This is intended to use be used in some
+    /// environment that hosted services is not supported, for example, in Azure Function.</param>
     /// </param>
     public KubernetesServiceCollectionBuilder(
         Action<AppInsightsForKubernetesOptions>? customizeOptions,
-        IClusterEnvironmentCheck? clusterCheck)
+        IClusterEnvironmentCheck? clusterCheck,
+        bool skipRegisterBackendService)
     {
         _customizeOptions = customizeOptions;
         _clusterCheck = clusterCheck ?? new ClusterEnvironmentCheck();
+        _skipRegisterBackendService = skipRegisterBackendService;
     }
 
     /// <summary>
@@ -142,7 +147,13 @@ internal class KubernetesServiceCollectionBuilder : IKubernetesServiceCollection
         serviceCollection.TryAddScoped<IK8sEnvironmentFactory, K8sEnvironmentFactory>();
         serviceCollection.TryAddSingleton<IK8sEnvironmentHolder>(_ => K8sEnvironmentHolder.Instance);
 
+        _logger.LogTrace("Registering bootstrap and hosted service.");
         serviceCollection.TryAddSingleton<IK8sInfoBootstrap, K8sInfoBootstrap>();
-        serviceCollection.AddHostedService<K8sInfoBackgroundService>();
+        if (!_skipRegisterBackendService)
+        {
+            _logger.LogInformation("Skip registering {0} by user configuration.", nameof(K8sInfoBackgroundService));
+            serviceCollection.AddHostedService<K8sInfoBackgroundService>();
+        }
+        _logger.LogTrace("Registered bootstrap and hosted service.");
     }
 }

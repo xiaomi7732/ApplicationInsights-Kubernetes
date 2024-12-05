@@ -49,7 +49,7 @@ internal class KubernetesTelemetryInitializer : ITelemetryInitializer
         }
         else
         {
-            _logger.LogTrace("Application Insights for Kubernetes telemetry initializer is used but the content has not ready yet.");
+            _logger.LogTrace("Application Insights for Kubernetes telemetry initializer is used but the content is not ready yet.");
         }
 
         telemetry.Context.GetInternalContext().SdkVersion = _sdkVersionUtils.CurrentSDKVersion;
@@ -79,6 +79,7 @@ internal class KubernetesTelemetryInitializer : ITelemetryInitializer
         // Container 
         SetCustomDimension(telemetry, Container.ID, k8sEnvironment.ContainerID, isValueOptional: true);
         SetCustomDimension(telemetry, Container.Name, k8sEnvironment.ContainerName, isValueOptional: true);
+        SetCustomDimension(telemetry, Container.ImageName, k8sEnvironment.ImageName, isValueOptional: true);
 
         // Pod
         SetCustomDimension(telemetry, Pod.ID, k8sEnvironment.PodID);
